@@ -1,0 +1,51 @@
+services:
+    doto:
+        build:
+            context: ..
+            dockerfile: ./docker/doto.Dockerfile
+        ports:
+            - 8080:8080
+        depends_on:
+            mongo:
+                condition: service_healthy
+        networks:
+            - app
+    mongo:
+        image: mongo
+        restart: always
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: example
+            MONGO_INITDB_DATABASE: doto
+        volumes:
+            - mongo_data:/data/db
+        healthcheck:
+            test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017 --quiet
+            interval: 5s
+            timeout: 3s
+            retries: 5
+        networks:
+            - app
+
+    mongo-express:
+        image: mongo-express
+        restart: always
+        ports:
+            - 8081:8081
+        environment:
+            ME_CONFIG_MONGODB_ADMINUSERNAME: root
+            ME_CONFIG_MONGODB_ADMINPASSWORD: example
+            ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/doto?authSource=admin
+            ME_CONFIG_BASICAUTH: false
+        depends_on:
+            mongo:
+                condition: service_healthy
+        networks:
+            - app
+
+volumes:
+    mongo_data:
+
+networks:
+    app:
+        driver: bridge
