@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/main/configuration-schema.json
-package: botapi
+package: dotoapi
 generate:
     std-http-server: true
     models: true

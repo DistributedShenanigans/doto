@@ -71,8 +71,7 @@ paths:
         in: path
         required: true
         schema:
-          type: integer
-          format: int64
+          type: string
       requestBody:
         content:
           application/json:
@@ -111,8 +110,7 @@ paths:
         in: path
         required: true
         schema: 
-          type: integer
-          format: int64
+          type: string
       responses:
         '204':
           description: Task deleted
@@ -133,7 +131,6 @@ components:
       properties:
         code: 
           type: integer 
-          format: int64
         description:
           type: string
 
@@ -145,8 +142,7 @@ components:
         - status
       properties:
         id:
-          type: integer
-          format: int64
+          type: string
         description:
           type: string
         status: 
@@ -163,7 +159,6 @@ components:
         status:
           type: string
           default: "pending"
-          enum: ["pending", "in_progress", "completed"]
     
     TaskStatusUpdate:
       type: object
@@ -172,4 +167,3 @@ components:
       properties:
         status:
           type: string
-          enum: ["pending", "in_progress", "completed"]
