@@ -20,14 +20,16 @@ type (
 	}
 
 	Serving struct {
-		Host string `yaml:"host" envDefault:"doto"`
-		Port string `yaml:"port" envDefault:"8080"`
+		Host    string `yaml:"host" envDefault:"doto"`
+		Port    int    `yaml:"port" envDefault:"8080"`
+		BotPort int    `yaml:"bot_port" envDefault:"8082"`
 	}
 )
 
 type Config struct {
 	Database Database `yaml:"database"`
 	Serving  Serving  `yaml:"serving"`
+	BotToken string   `env:"BOT_TOKEN"`
 }
 
 func New(name string) (*Config, error) {
@@ -87,7 +89,6 @@ func (d *Database) ToDSN() string {
 	)
 }
 
-var (
-	//go:embed default-config.yaml
-	configBytes []byte
-)
+
+//go:embed default-config.yaml
+var configBytes []byte

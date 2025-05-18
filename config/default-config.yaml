@@ -7,3 +7,4 @@ database:
 serving:
     host: doto
     port: 8080
+    bot_port: 8082

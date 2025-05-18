@@ -23,6 +23,7 @@ type mongoTask struct {
 	Status      string             `bson:"status"`
 }
 
+// WARN: Порнография
 var (
 	ErrNotFound = errors.New("task not found")
 )

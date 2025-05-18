@@ -1,7 +1,7 @@
 package dotosrv
 
 import (
-	"net"
+	"fmt"
 	"net/http"
 
 	dotoapi "github.com/DistributedShenanigans/doto/api"
@@ -10,7 +10,7 @@ import (
 
 func New(cfg config.Serving, si dotoapi.ServerInterface) *http.Server {
 	return &http.Server{
-		Addr:    net.JoinHostPort(cfg.Host, cfg.Port),
+		Addr:    fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		Handler: dotoapi.HandlerFromMux(si, http.NewServeMux()),
 	}
 }
