@@ -58,8 +58,30 @@ services:
     networks:
       - app
 
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ../prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - app
+
+  grafana:
+    image: grafana/grafana
+    volumes:
+      - ../grafana/provisioning/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    ports:
+      - "3000:3000"
+    networks:
+      - app
+    depends_on:
+      - prometheus
+
 volumes:
   mongo_data:
+  prometheus_data:
 
 networks:
   app:

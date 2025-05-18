@@ -30,7 +30,14 @@ func main() {
 
 	repo := tasks.New(client.Database("doto"), "tasks")
 
-	srv := dotosrv.New(cfg.Serving, dotoapi.New(repo))
+	si := dotoapi.New(repo)
+	handler := dotoapi.HandlerWithOptions(si, dotoapi.StdHTTPServerOptions{
+		Middlewares: []dotoapi.MiddlewareFunc{dotoapi.MetricsMiddleware},
+	})
+
+	srv := dotosrv.New(cfg.Serving, handler)
+
+	dotoapi.SetupMetricsHandler()
 
 	srv.ListenAndServe()
 }
