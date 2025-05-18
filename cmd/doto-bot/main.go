@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -21,21 +20,26 @@ func main() {
 
 	cfg, err := config.New(*configFileName)
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		slog.Error("failed to load config", "error", err)
+		os.Exit(1)
 	}
+
+	slog.Info("config loaded", "config", *cfg)
 
 	apiClient, err := dotoapi.NewClientWithResponses(
 		fmt.Sprintf("http://%s:%d", cfg.Serving.Host, cfg.Serving.BotPort),
 	)
 	if err != nil {
-		log.Fatalf("failed to create api client: %v", err)
+		slog.Error("failed to create api client", "error", err)
+		os.Exit(1)
 	}
 
-	slog.Info("api client created", "host", cfg.Serving.Host, "port", cfg.Serving.Port)
+	slog.Info("api client created", "host", cfg.Serving.Host, "port", cfg.Serving.BotPort)
 
 	bot, err := bot.NewBotService(cfg, apiClient)
 	if err != nil {
-		log.Fatalf("failed to create bot service: %v", err)
+		slog.Error("failed to create bot service", "error", err)
+		os.Exit(1)
 	}
 
 	slog.Info("bot service created")

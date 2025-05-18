@@ -62,7 +62,11 @@ func NewBotService(
 			},
 			{
 				Command:     "add",
-				Description: "Add a new task",
+				Description: "Add a new task, e.g. `/add <task_description>`",
+			},
+			{
+				Command:     "list",
+				Description: "List all tasks",
 			},
 			{
 				Command:     "update",
