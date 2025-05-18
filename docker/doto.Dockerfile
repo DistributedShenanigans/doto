@@ -12,6 +12,7 @@ FROM alpine:latest AS runtime
 
 WORKDIR /app
 COPY --from=builder /app/bin/doto ./
+COPY --from=builder /app/config/default-config.yaml ./config/
 
 EXPOSE 8080
 
