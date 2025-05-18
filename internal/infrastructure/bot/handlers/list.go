@@ -77,11 +77,9 @@ func (h *ListHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Upd
 			statusEmoji = "🟢"
 		}
 
-		messageText += fmt.Sprintf("%d. %s %s\n", i+1, statusEmoji, task.Description)
-
+		messageText += fmt.Sprintf("%d. %s %s\n", i+1, task.Description, statusEmoji)
 	}
 
-	// Send message with inline keyboard
 	if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:    update.Message.Chat.ID,
 		Text:      messageText,

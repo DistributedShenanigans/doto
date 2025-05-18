@@ -68,9 +68,8 @@ func (h *UpdateHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 			statusEmoji = "🟢"
 		}
 
-		messageText += fmt.Sprintf("%d. %s %s\n", i+1, statusEmoji, task.Description)
+		messageText += fmt.Sprintf("%d. %s %s\n", i+1, task.Description, statusEmoji)
 
-		// Create button for each task
 		row := []models.InlineKeyboardButton{
 			{
 				Text:         fmt.Sprintf("%d", i+1),
@@ -80,7 +79,6 @@ func (h *UpdateHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 		keyboardButtons = append(keyboardButtons, row)
 	}
 
-	// Send message with inline keyboard
 	if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:      update.Message.Chat.ID,
 		Text:        messageText,
@@ -94,10 +92,12 @@ func (h *UpdateHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 func (h *UpdateHandler) HandleCallback(ctx context.Context, b *bot.Bot, update *models.Update) {
 	const op = "handlers.UpdateHandler.HandleCallback"
 
-	// Extract task ID from callback data
-	taskID := update.CallbackQuery.Data[:7] // Remove "update_" prefix
+	slog.Debug("handling callback", "op", op, "chat_id", update.CallbackQuery.From.ID, "data", update.CallbackQuery.Data)
 
-	// Get current task status
+	taskID := update.CallbackQuery.Data[7:]
+
+	slog.Debug("retrieving task ID", "task_id", taskID)
+
 	taskResp, err := h.ApiService.GetTasksWithResponse(ctx, &dotoapi.GetTasksParams{
 		TgChatId: update.CallbackQuery.From.ID,
 	})
@@ -105,6 +105,8 @@ func (h *UpdateHandler) HandleCallback(ctx context.Context, b *bot.Bot, update *
 		errors.HandleError(ctx, b, update.CallbackQuery.From.ID, op, err, errors.ErrorMsgInternal)
 		return
 	}
+
+	slog.Debug(op, "task response", slog.Any("response", taskResp.JSON200))
 
 	tasks := *taskResp.JSON200
 	var currentTask *dotoapi.Task
@@ -116,6 +118,14 @@ func (h *UpdateHandler) HandleCallback(ctx context.Context, b *bot.Bot, update *
 			break
 		}
 	}
+
+	if currentTask == nil {
+		slog.Error(op, "task not found", slog.String("task_id", taskID))
+		errors.HandleError(ctx, b, update.CallbackQuery.From.ID, op, nil, errors.ErrorMsgInternal)
+		return
+	}
+
+	slog.Debug(op, "current task", slog.Any("task", currentTask))
 
 	switch currentTask.Status {
 	case StatusPending:
@@ -131,7 +141,6 @@ func (h *UpdateHandler) HandleCallback(ctx context.Context, b *bot.Bot, update *
 
 	currentTask.Status = newStatus
 
-	// Update task status
 	resp, err := h.ApiService.PutTasksTaskIdWithResponse(ctx, taskID, &dotoapi.PutTasksTaskIdParams{
 		TgChatId: update.CallbackQuery.From.ID,
 	}, dotoapi.TaskStatusUpdate{
@@ -140,5 +149,32 @@ func (h *UpdateHandler) HandleCallback(ctx context.Context, b *bot.Bot, update *
 	if err != nil || resp.StatusCode() != 200 {
 		slog.Error(op, "failed to update task", slog.Any("error", err))
 		return
+	}
+
+	slog.Debug(op, "task updated successfully", slog.Any("response", resp.JSON200))
+
+	messageText := fmt.Sprintf("*Task updated successfully!*\n\n%s", currentTask.Description)
+	switch newStatus {
+	case StatusPending:
+		messageText += "\n\n*New Status:* Pending 🔴"
+	case StatusInProgress:
+		messageText += "\n\n*New Status:* In Progress 🟡"
+	default:
+		messageText += "\n\n*New Status:* Done 🟢"
+	}
+
+	if _, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+		ChatID:    update.CallbackQuery.From.ID,
+		MessageID: update.CallbackQuery.Message.Message.ID,
+		Text:      messageText,
+		ParseMode: models.ParseModeMarkdownV1,
+	}); err != nil {
+		slog.Error(op, "failed to edit message", slog.Any("error", err))
+
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID:    update.CallbackQuery.From.ID,
+			Text:      messageText,
+			ParseMode: models.ParseModeMarkdownV1,
+		})
 	}
 }

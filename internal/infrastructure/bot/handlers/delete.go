@@ -80,7 +80,6 @@ func (h *DeleteHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 
 		messageText += fmt.Sprintf("%d. %s %s\n", i+1, statusEmoji, task.Description)
 
-		// Create button for each task
 		row := []models.InlineKeyboardButton{
 			{
 				Text:         fmt.Sprintf("%d", i+1),
@@ -90,7 +89,6 @@ func (h *DeleteHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 		keyboardButtons = append(keyboardButtons, row)
 	}
 
-	// Send message with inline keyboard
 	if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:      update.Message.Chat.ID,
 		Text:        messageText,
@@ -104,15 +102,28 @@ func (h *DeleteHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 func (h *DeleteHandler) HandleCallback(ctx context.Context, b *bot.Bot, update *models.Update) {
 	const op = "handlers.DeleteHandler.HandleCallback"
 
-	// Extract task ID from callback data
-	taskID := update.CallbackQuery.Data[7:] // Remove "delete_" prefix
+	taskID := update.CallbackQuery.Data[7:]
 
-	// Call the API to delete the task
 	resp, err := h.ApiService.DeleteTasksTaskIdWithResponse(ctx, taskID, &dotoapi.DeleteTasksTaskIdParams{
 		TgChatId: update.CallbackQuery.From.ID,
 	})
 	if err != nil || resp.StatusCode() != 204 {
 		slog.Error(op, "failed to delete task", slog.Any("error", err))
 		return
+	}
+
+	if _, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+		ChatID:    update.CallbackQuery.From.ID,
+		MessageID: update.CallbackQuery.Message.Message.ID,
+		Text:      "*Task deleted successfully!*",
+		ParseMode: models.ParseModeMarkdownV1,
+	}); err != nil {
+		slog.Error(op, "failed to edit message", slog.Any("error", err))
+
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID:    update.CallbackQuery.From.ID,
+			Text:      "*Task deleted successfully!*",
+			ParseMode: models.ParseModeMarkdownV1,
+		})
 	}
 }
