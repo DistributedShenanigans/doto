@@ -1,0 +1,10 @@
+database:
+    username: root
+    password: example
+    host: mongo
+    port: 27017
+    name: doto
+serving:
+    host: doto
+    port: 8080
+    bot_port: 8082
