@@ -89,5 +89,6 @@ func (d *Database) ToDSN() string {
 	)
 }
 
+
 //go:embed default-config.yaml
 var configBytes []byte
