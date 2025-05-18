@@ -15,13 +15,12 @@ func StartHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	// Send a welcome message
 	if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   "_Welcome to the bot!_ Use /help to see available commands.",
+		Text:   "_Welcome to the bot!_\nUse /help to see available commands\nOr /add to start with new task",
 		ReplyMarkup: &models.ReplyKeyboardMarkup{
 			Keyboard: [][]models.KeyboardButton{
 				{
-					{
-						Text: "Help",
-					},
+					{Text: "/help"},
+					{Text: "/add"},
 				},
 			},
 			ResizeKeyboard:  true,

@@ -11,18 +11,18 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-type DeleteHandler struct {
+type ListHandler struct {
 	ApiService dotoapi.ClientWithResponsesInterface
 }
 
-func NewDeleteHandler(apiService dotoapi.ClientWithResponsesInterface) *DeleteHandler {
-	return &DeleteHandler{
+func NewListHandler(apiService dotoapi.ClientWithResponsesInterface) *ListHandler {
+	return &ListHandler{
 		ApiService: apiService,
 	}
 }
 
-func (h *DeleteHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
-	const op = "handlers.DeleteHandler"
+func (h *ListHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
+	const op = "handlers.ListHandler"
 	slog.Info(op, "chat_id", update.Message.Chat.ID, "user_id", update.Message.From.ID)
 
 	resp, err := h.ApiService.GetTasksWithResponse(ctx, &dotoapi.GetTasksParams{
@@ -65,7 +65,6 @@ func (h *DeleteHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 	})
 
 	var messageText string
-	var keyboardButtons [][]models.InlineKeyboardButton
 
 	for i, task := range tasks {
 		statusEmoji := "🔴"
@@ -80,39 +79,14 @@ func (h *DeleteHandler) Handle(ctx context.Context, b *bot.Bot, update *models.U
 
 		messageText += fmt.Sprintf("%d. %s %s\n", i+1, statusEmoji, task.Description)
 
-		// Create button for each task
-		row := []models.InlineKeyboardButton{
-			{
-				Text:         fmt.Sprintf("%d", i+1),
-				CallbackData: fmt.Sprintf("delete_%s", task.Id),
-			},
-		}
-		keyboardButtons = append(keyboardButtons, row)
 	}
 
 	// Send message with inline keyboard
 	if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:      update.Message.Chat.ID,
-		Text:        messageText,
-		ParseMode:   models.ParseModeMarkdownV1,
-		ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: keyboardButtons},
+		ChatID:    update.Message.Chat.ID,
+		Text:      messageText,
+		ParseMode: models.ParseModeMarkdownV1,
 	}); err != nil {
 		slog.Error(op, "failed to send message", slog.Any("error", err))
-	}
-}
-
-func (h *DeleteHandler) HandleCallback(ctx context.Context, b *bot.Bot, update *models.Update) {
-	const op = "handlers.DeleteHandler.HandleCallback"
-
-	// Extract task ID from callback data
-	taskID := update.CallbackQuery.Data[7:] // Remove "delete_" prefix
-
-	// Call the API to delete the task
-	resp, err := h.ApiService.DeleteTasksTaskIdWithResponse(ctx, taskID, &dotoapi.DeleteTasksTaskIdParams{
-		TgChatId: update.CallbackQuery.From.ID,
-	})
-	if err != nil || resp.StatusCode() != 204 {
-		slog.Error(op, "failed to delete task", slog.Any("error", err))
-		return
 	}
 }
