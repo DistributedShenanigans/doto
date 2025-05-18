@@ -17,8 +17,6 @@ services:
       dockerfile: ./docker/bot.Dockerfile
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
-    ports:
-      - 8082:8082
     depends_on:
       mongo:
         condition: service_healthy

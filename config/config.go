@@ -22,7 +22,6 @@ type (
 	Serving struct {
 		Host    string `yaml:"host" envDefault:"doto"`
 		Port    int    `yaml:"port" envDefault:"8080"`
-		BotPort int    `yaml:"bot_port" envDefault:"8082"`
 	}
 )
 

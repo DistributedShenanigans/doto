@@ -14,6 +14,4 @@ WORKDIR /app
 COPY --from=builder /app/bin/bot .
 COPY --from=builder /app/config/default-config.yaml ./config/
 
-EXPOSE 8082
-
 CMD ["./bot"]
