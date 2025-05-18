@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
+	"log"
+	"net/http"
 
 	dotoapi "github.com/DistributedShenanigans/doto/api"
 	"github.com/DistributedShenanigans/doto/config"
@@ -11,6 +12,7 @@ import (
 	dotosrv "github.com/DistributedShenanigans/doto/internal/infrastructure/servers/doto"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -20,12 +22,12 @@ func main() {
 
 	cfg, err := config.New(*configFileName)
 	if err != nil {
-		os.Exit(1)
+		log.Fatalf("failed to load config: %v", err)
 	}
 
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.Database.ToDSN()))
 	if err != nil {
-		os.Exit(1)
+		log.Fatalf("failed to connect to database: %v", err)
 	}
 
 	repo := tasks.New(client.Database("doto"), "tasks")
@@ -35,9 +37,11 @@ func main() {
 		Middlewares: []dotoapi.MiddlewareFunc{dotoapi.MetricsMiddleware},
 	})
 
-	srv := dotosrv.New(cfg.Serving, handler)
+	mux := http.NewServeMux()
+	mux.Handle("/", handler)
+	mux.Handle("/metrics", promhttp.Handler())
 
-	dotoapi.SetupMetricsHandler()
+	srv := dotosrv.New(cfg.Serving, mux)
 
 	srv.ListenAndServe()
 }
