@@ -14,6 +14,8 @@ import (
 )
 
 func main() {
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
 	configFileName := flag.String("config", "./config/default-config.yaml", "path to config file")
 
 	flag.Parse()
@@ -24,17 +26,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.Info("config loaded", "config", *cfg)
+	slog.Debug("config loaded", "config", *cfg)
 
 	apiClient, err := dotoapi.NewClientWithResponses(
-		fmt.Sprintf("http://%s:%d", cfg.Serving.Host, cfg.Serving.BotPort),
+		fmt.Sprintf("http://%s:%d", cfg.Serving.Host, cfg.Serving.Port),
 	)
 	if err != nil {
 		slog.Error("failed to create api client", "error", err)
 		os.Exit(1)
 	}
 
-	slog.Info("api client created", "host", cfg.Serving.Host, "port", cfg.Serving.BotPort)
+	slog.Info("api client created", "host", cfg.Serving.Host, "port", cfg.Serving.Port)
 
 	bot, err := bot.NewBotService(cfg, apiClient)
 	if err != nil {
